@@ -47,6 +47,7 @@ def blocks_to_page_info(page_blocks, image_dict, page, image_writer, page_index)
     ref_text_blocks = magic_model.get_ref_text_blocks()
     phonetic_blocks = magic_model.get_phonetic_blocks()
     list_blocks = magic_model.get_list_blocks()
+    page_footnote_blocks = magic_model.get_page_footnote_blocks()
 
     # 如果有标题优化需求，则对title_blocks截图det
     if heading_level_import_success:
@@ -91,6 +92,7 @@ def blocks_to_page_info(page_blocks, image_dict, page, image_writer, page_index)
         *text_blocks,
         *interline_equation_blocks,
         *list_blocks,
+        *page_footnote_blocks,
     ])
     # 对page_blocks根据index的值进行排序
     page_blocks.sort(key=lambda x: x["index"])

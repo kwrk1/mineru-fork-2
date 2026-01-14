@@ -191,6 +191,7 @@ class MagicModel:
         self.ref_text_blocks = []
         self.phonetic_blocks = []
         self.list_blocks = []
+        self.page_footnotes_blocks = []
         for block in blocks:
             if block["type"] in [BlockType.IMAGE_BODY, BlockType.IMAGE_CAPTION, BlockType.IMAGE_FOOTNOTE]:
                 self.image_blocks.append(block)
@@ -208,10 +209,12 @@ class MagicModel:
                 self.ref_text_blocks.append(block)
             elif block["type"] in [BlockType.PHONETIC]:
                 self.phonetic_blocks.append(block)
-            elif block["type"] in [BlockType.HEADER, BlockType.FOOTER, BlockType.PAGE_NUMBER, BlockType.ASIDE_TEXT, BlockType.PAGE_FOOTNOTE]:
-                self.discarded_blocks.append(block)
+            elif block["type"] == BlockType.PAGE_FOOTNOTE:
+                self.page_footnotes_blocks.append(block)
             elif block["type"] == BlockType.LIST:
                 self.list_blocks.append(block)
+            elif block["type"] in [BlockType.HEADER, BlockType.FOOTER, BlockType.PAGE_NUMBER, BlockType.ASIDE_TEXT]:
+                self.discarded_blocks.append(block)
             else:
                 continue
 
@@ -270,7 +273,9 @@ class MagicModel:
     def get_all_spans(self):
         return self.all_spans
 
-
+    def get_page_footnote_blocks(self):
+        return self.page_footnotes_blocks
+    
 def isolated_formula_clean(txt):
     latex = txt[:]
     if latex.startswith("\\["): latex = latex[2:]
