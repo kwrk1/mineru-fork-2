@@ -16,7 +16,7 @@ def run_mineru(pdf_path: Path, output_dir: Path, start_page: int, end_page: int)
         "--end", str(end_page),  
         "--table", "False",  
         "--formula", "False",  
-        "--backend", "vlm-vllm-engine"  
+        "--backend", "hybrid-auto-engine" #  
     ]  
 
     subprocess.run(cmd, check=True)
@@ -26,7 +26,7 @@ def run_mineru_batch(pdf_path, output_dir, batch_size=500):
     
 
     with pdfplumber.open(pdf_path) as pdf:
-        total_pages = len(pdf.pages)
+        total_pages = len(pdf.pages) - 1
     
     for i in range(0, total_pages, batch_size):  
         start = i  
