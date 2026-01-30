@@ -52,6 +52,7 @@ _build/
 
 output/
 
+/data/input
 /data/downloaded_*
 /data/input_*
 *.egg-info

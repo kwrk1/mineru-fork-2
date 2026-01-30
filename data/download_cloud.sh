@@ -3,16 +3,23 @@
 set -e
 
 REMOTE_USER="kai"
-REMOTE_HOST="35.242.233.184"
+REMOTE_HOST="35.198.134.104"
 REMOTE_BASE="/home/k_werk/mineru-fork-2/data"
-REMOTE_INPUT_FILE_NAME="bgh"
+REMOTE_INPUT_FILE_NAME="Arbeitsrecht_Kommentar"
 REMOTE_MINERU_MODE_NAME="hybrid_auto"
 
-LOCAL_BASE="./downloaded_bgh"
+LOCAL_BASE="./downloaded_arbeitsrecht_2"
 
-FOLDERS=(
-  output_bgh_pages_0_5
-)
+FOLDERS=()
+
+START=2120
+END=3455
+STEP=10
+
+for ((i=START; i<END; i+=STEP)); do
+  j=$((i + STEP))
+  FOLDERS+=("output_arbeitsrecht_pages_${i}_${j}")
+done
 
 FILES=(
   "${REMOTE_INPUT_FILE_NAME}.md"

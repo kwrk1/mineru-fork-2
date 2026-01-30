@@ -1,8 +1,10 @@
 import os
 import re
+from pathlib import Path
 
-BASE_DIR = "/home/kai/dev/mineru-fork-2/data/downloaded_bgb"
-OUTPUT_MD = "BGB-Erman_merged.md"
+
+BASE_DIR = Path(__file__).parent / "downloaded_bgb"
+OUTPUT_MD = BASE_DIR / "BGB-Erman_merged.md"
 
 # z.B. output_bgb_pages_500_1000 -> 500
 folder_re = re.compile(r".*?(\d+)_\d+$")
@@ -34,9 +36,6 @@ with open(OUTPUT_MD, "w", encoding="utf-8") as out:
         with open(md_path, "r", encoding="utf-8") as f:
             content = f.read().strip()
 
-        # Optionaler Trenner
-        out.write(f"\n\n<!-- BEGIN {folder_name} (ab Seite {page_start}) -->\n\n")
         out.write(content)
-        out.write(f"\n\n<!-- END {folder_name} -->\n")
 
 print(f"Fertig! Markdown gemerged in: {OUTPUT_MD}")

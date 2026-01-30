@@ -1,10 +1,13 @@
 import json
 import os
 import re
+from pathlib import Path
 
-BASE_DIR = "/home/kai/dev/mineru-fork-2/data/downloaded_bgb"
-OUTPUT_JSON = "merged_content_list.json"
-OUTPUT_JSONL = "merged_content_list.jsonl"
+INPUT_FILE_NAME = "Arbeitsrecht_Kommentar"
+BASE_DIR = Path(__file__).parent / "downloaded_arbeitsrecht"
+OUTPUT_JSON = BASE_DIR / "merged_content_list.json"
+OUTPUT_JSONL = BASE_DIR / "merged_content_list.jsonl"
+CONTENT_LIST_FILE = f"{INPUT_FILE_NAME}_content_list.json"
 
 merged = []
 
@@ -24,7 +27,7 @@ for folder_name in sorted(os.listdir(BASE_DIR)):
 
     page_offset = int(match.group(1))
 
-    json_path = os.path.join(folder_path, "BGB-Erman_content_list.json")
+    json_path = os.path.join(folder_path, CONTENT_LIST_FILE)
     if not os.path.isfile(json_path):
         print(f"Keine JSON gefunden in: {folder_name}")
         continue
@@ -33,10 +36,16 @@ for folder_name in sorted(os.listdir(BASE_DIR)):
         data = json.load(f)
 
     for item in data:
+        #Die letzte Seite einer Batch ist immer == der nullten Seite des nächsten Batches.
+        if item["page_idx"] == 0:
+            continue
+
         if "page_idx" in item:
             item["page_idx"] += page_offset
         else:
             print(f"Warnung: kein page_idx in {folder_name}")
+        if item["page_idx"] == 0:
+            continue
         merged.append(item)
 
 # -------- JSON --------
