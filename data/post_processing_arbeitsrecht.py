@@ -3,15 +3,11 @@ import re
 from pathlib import Path
 
 # ---------- Konfiguration ----------
-INPUT_FILE = "/home/kai/dev/mineru-fork-2/data/downloaded_arbeitsrecht/merged_content_list.json"
-OUTPUT_FILE = "/home/kai/dev/mineru-fork-2/data/downloaded_arbeitsrecht/merged_content_list.json"
+PROJECT_NAME = "downloaded_arbeitsrecht"
+INPUT_FILE = Path(__file__).parent / PROJECT_NAME / "merged_content_list.json"
+OUTPUT_FILE = Path(__file__).parent / PROJECT_NAME / "merged_content_list.json"
 
-# Regex:
-# - ein oder zwei Pipes
-# - optional Leerzeichen
-# - eine Zahl
 FOOTNOTE_PATTERN = re.compile(r"\|{1,2}\s*\d+")
-
 
 def process_entry(entry: dict) -> dict:
     """

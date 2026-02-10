@@ -59,7 +59,7 @@ with open(OUTPUT_JSONL, "w", encoding="utf-8") as f:
 
 
 
-print(f"Fertig!")
+print("Fertig!")
 print(f"- JSON:  {OUTPUT_JSON}")
 print(f"- JSONL: {OUTPUT_JSONL}")
 print(f"- Einträge: {len(merged)}")
