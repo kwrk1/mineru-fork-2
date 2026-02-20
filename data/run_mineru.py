@@ -21,7 +21,7 @@ def run_mineru(pdf_path: Path, output_dir: Path, start_page: int, end_page: int)
         "--formula", "False",    
         "--backend", "hybrid-auto-engine",  
         "--method", "txt",  # auto, ocr, txt
-        "--lang", "de"
+        "--lang", "latin"
     ]    
 
     subprocess.run(cmd, check=True, env=env)
