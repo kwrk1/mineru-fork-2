@@ -8,18 +8,23 @@ from pathlib import Path
 def run_mineru(pdf_path: Path, output_dir: Path, start_page: int, end_page: int):
     print(f"Processing pages {start_page}-{end_page}")  
 
-    cmd = [  
-        "mineru",  
-        "--path", pdf_path,  
-        "--output", f"{output_dir}_pages_{start_page}_{end_page}",  
-        "--start", str(start_page),  
-        "--end", str(end_page),  
-        "--table", "False",  
-        "--formula", "False",  
-        "--backend", "hybrid-auto-engine" #  
-    ]  
+    env = os.environ.copy()  
+    env['MINERU_HYBRID_FORCE_PIPELINE_ENABLE'] = 'true'  
+  
+    cmd = [    
+        "mineru",    
+        "--path", str(pdf_path),    
+        "--output", f"{output_dir}_pages_{start_page}_{end_page}",    
+        "--start", str(start_page),    
+        "--end", str(end_page),    
+        "--table", "False",    
+        "--formula", "False",    
+        "--backend", "hybrid-auto-engine",  
+        "--method", "txt",  # auto, ocr, txt
+        "--lang", "de"
+    ]    
 
-    subprocess.run(cmd, check=True)
+    subprocess.run(cmd, check=True, env=env)
     print(f"MinerU completed successfully for {start_page}-{end_page} Page.")
 
 def run_mineru_batch(pdf_path, output_dir, batch_size=500):
