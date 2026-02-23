@@ -3,12 +3,12 @@ from collections import Counter
 
 from models import Footnote
 
-#TODO: das muss für jede pdf angepasst werden die tol and threshold
+#TODO: das muss für jede pdf angepasst werden die tol
 def same_line(a, b, tolerance=2.5):
     return abs(a["top"] - b["top"]) < tolerance
 
-#TODO: das muss für jede pdf angepasst werden die tol and threshold
-def needs_space(prev, curr, threshold=1.5):
+#TODO: das muss für jede pdf angepasst der threshold
+def needs_space(prev, curr, threshold=1.0):
     return (curr["x0"] - prev["x1"]) > threshold
 
 def calculating_common_font_size(chars):

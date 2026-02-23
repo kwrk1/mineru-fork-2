@@ -15,6 +15,7 @@ class Footnote():
     page: int
     left_context: str = ""
     right_context: str = ""
+    inserted: bool = False
 
 
 @dataclass

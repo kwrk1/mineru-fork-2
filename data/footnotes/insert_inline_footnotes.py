@@ -48,6 +48,12 @@ def insert_inline_footnotes_pdf(input_pdf_file: Path, input_content_list_file_1:
 
     all_mineru_blocks = []
 
+    #logging
+    insertion_errors = 0
+    map_smaller_pdf = 0
+    map_bigger_pdf = 0
+    no_footnotes_extracted = 0
+
     with open(output_folder / "new_content_list.jsonl", "w", encoding="utf-8") as out, \
         pdfplumber.open(input_pdf_file) as pdf:
 
@@ -84,8 +90,6 @@ def insert_inline_footnotes_pdf(input_pdf_file: Path, input_content_list_file_1:
             )
 
             if len(footnote_map) != len(top_footnotes):
-                logging.info(f"Trying backup data on Page: Content List: {idx} PDF: {idx+1}")
-
                 backup_page_blocks = backup_pages.get(idx, [])
                 backup_mineru_page_footnote_blocks = [
                     block for block in backup_page_blocks
@@ -99,26 +103,33 @@ def insert_inline_footnotes_pdf(input_pdf_file: Path, input_content_list_file_1:
                 )
 
                 if not footnote_map:
+                    logging.info("ANFANG KEINE FOOTNOTE MAP")
                     logging.info(f"MinerU Error on Page: Content List: {idx} PDF: {idx+1}")
-                    logging.info(f"Unsuccesfully with backup data on Page: Content List: {idx} PDF: {idx+1}.")
+                    logging.info("ENDE KEINE FOOTNOTE MAP")
+                    no_footnotes_extracted += 1
                 elif len(footnote_map) < len(top_footnotes):
+                    logging.info("ANFANG FOOTNOTE MAP < FOOTNOTES FROM PDF")
                     logging.info(f"MinerU Error on Page: Content List: {idx} PDF: {idx+1}")
-                    logging.info(f"Unsuccesfully with backup data on Page: Content List: {idx} PDF: {idx+1}.")
+                    logging.info("ENDE FOOTNOTE MAP < FOOTNOTES FROM PDF")
+                    map_smaller_pdf += 1
                 elif len(footnote_map) > len(top_footnotes):
+                    logging.info("ANFANG FOOTNOTE MAP > FOOTNOTES FROM PDF")
                     logging.info(f"My misstake on page: Content List: {idx} PDF: {idx+1}")
                     logging.info(footnote_map)
                     logging.info("-----")
                     logging.info(top_footnotes)
-                    logging.info(f"Unsuccesfully with backup data on Page: Content List: {idx} PDF: {idx+1}.")
-                else:
-                    logging.info(f"Sucessfully used backup data on Page: Content List: {idx} PDF: {idx+1}.")
+                    logging.info("ENDE FOOTNOTE MAP > FOOTNOTES FROM PDF")
+                    map_bigger_pdf += 1
+
 
             #Preparing the MinerU Blocks for the insertion of inline footnotes
+            total_insertions = 0
             for block in all_page_mineru_blocks:
                 if isinstance(block, TextBlock):
                     insertions = collect_insertions(block.text, top_footnotes)
 
                     if insertions:
+                        total_insertions += len(insertions)
                         block.text = apply_insertions(block.text, insertions)
                 elif isinstance(block, ListBlock):
                     new_list_items = []
@@ -126,6 +137,7 @@ def insert_inline_footnotes_pdf(input_pdf_file: Path, input_content_list_file_1:
                         insertions = collect_insertions(text, top_footnotes)
 
                         if insertions:
+                            total_insertions += len(insertions)
                             new_text = apply_insertions(text, insertions)
                             new_list_items.append(new_text)
                         else:
@@ -134,7 +146,20 @@ def insert_inline_footnotes_pdf(input_pdf_file: Path, input_content_list_file_1:
                     block.list_items = new_list_items
                 else:
                     logging.info(f"Unknown Block Instance: {block}")
+            
+            not_inserted = [fn for fn in top_footnotes if not fn.inserted]
 
+            if not_inserted:
+                logging.info("ANFANG INSERTION ERROR")
+                logging.info(f"Insertions Error on Page: Content List: {idx} PDF: {idx+1}")
+                
+                insertion_errors += len(not_inserted)
+
+                for fn in not_inserted:
+                    logging.info(f"NOT INSERTED: {fn.number} | left='{fn.left_context}' | right='{fn.right_context}'")
+
+                logging.info("ENDE INSERTION ERROR")
+                
 
             #Finaly inserting the footnotes in the text
             for block in all_page_mineru_blocks:
@@ -163,7 +188,13 @@ def insert_inline_footnotes_pdf(input_pdf_file: Path, input_content_list_file_1:
             page.flush_cache()
     
         with open(output_folder / "new_content_list.json", "w") as out:
-            json.dump(all_mineru_blocks, out)
+            json.dump(all_mineru_blocks, out, indent=2)
+        
+        logging.info("ERROR COUNTS:")
+        logging.info(f"NO FOOTNOTE MAP ERRORS: {no_footnotes_extracted}")
+        logging.info(f"MAP SMALLER TOP FOOTNOTES (MinerU Error): {map_smaller_pdf}")
+        logging.info(f"MAP BIGGER TOP FOOTNOTES (Top Footnotes Extraction Error): {map_bigger_pdf}")
+        logging.info(f"INSERTION ERRORS: {insertion_errors}")
 
 def insert_inline_footnotes(text: str, footnote_map: dict[str, str], page_idx: int):
     def insert_footnote_with_error_log(x : re.Match) -> str:
@@ -194,7 +225,9 @@ if __name__ == "__main__":
     output_path = Path(__file__).parent.parent / PROJECT_NAME
 
     #Backup Run
-    PROJECT_NAME = "downloaded_arbeitsrecht_2"
+    #Wieso die? habe von hand viel angepasst in den footnotes deswegen werden die jetzt als backup benutzt.
+    #und die original daten sind die neuen mit den zugeschnittenen pdfs
+    PROJECT_NAME = "downloaded_arbeitsrecht_zuschnitt_2"
     input_content_list_file_2 = Path(__file__).parent.parent / PROJECT_NAME / "merged_content_list.json"
     
     print("Writing to:", output_path.resolve())

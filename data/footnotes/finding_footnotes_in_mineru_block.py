@@ -3,11 +3,11 @@ from typing import List
 from models import Footnote
 
 def normalize_string(s: str) -> str:
-    #Checke ich noch nicht ganz wieso gebraucht
-    return " ". join(s.replace("\n", " ").split())
+    #quick fix for bindestrich im rechten kontext
+    return " ".join(s.replace("\n", " ").rstrip("-").split())
 
 
-def find_footnote_in_block(block_text: str, footnote: Footnote):
+def find_footnote_in_block_context(block_text: str, footnote: Footnote):
     block = normalize_string(block_text)
     left = normalize_string(footnote.left_context)
     right = normalize_string(footnote.right_context)
@@ -50,9 +50,10 @@ def collect_insertions(block_text: str, footnotes: List[Footnote]):
     insertions = []
 
     for fn in footnotes:
-        hit = find_footnote_in_block(block_text, fn)
+        hit = find_footnote_in_block_context(block_text, fn)
         if hit:
             insertions.append(hit)
+            fn.inserted = True
 
     return insertions
 
