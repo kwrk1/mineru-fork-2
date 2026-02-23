@@ -3,22 +3,25 @@
 set -e
 
 REMOTE_USER="kai"
-REMOTE_HOST="35.198.134.104"
+REMOTE_HOST="34.6.17.211"
 REMOTE_BASE="/home/k_werk/mineru-fork-2/data"
-REMOTE_INPUT_FILE_NAME="Arbeitsrecht_Kommentar"
-REMOTE_MINERU_MODE_NAME="hybrid_auto"
+REMOTE_INPUT_FILE_NAME="Arbeitsrecht_Kommentar_Zuschnitt_3"
+REMOTE_MINERU_MODE_NAME="hybrid_txt"
 
-LOCAL_BASE="./downloaded_arbeitsrecht_2"
+LOCAL_BASE="./downloaded_arbeitsrecht_zuschnitt_3"
 
 FOLDERS=()
 
-START=2120
+START=0
 END=3455
-STEP=10
+STEP=500
 
 for ((i=START; i<END; i+=STEP)); do
   j=$((i + STEP))
-  FOLDERS+=("output_arbeitsrecht_pages_${i}_${j}")
+  if (( j > END )); then
+    j=$END
+  fi
+  FOLDERS+=("output_arbeitsrecht_3_pages_${i}_${j}")
 done
 
 FILES=(
