@@ -35,9 +35,12 @@ def run_mineru_batch(pdf_path, output_dir, batch_size=500):
     with pdfplumber.open(pdf_path) as pdf:
         total_pages = len(pdf.pages) - 1
     
+    pdf_output_dir = output_dir / pdf_path.stem
+    pdf_output_dir.mkdir(parents=True, exist_ok=True)
+    
     for start in range(0, total_pages, batch_size):
         end = min(start + batch_size, total_pages)
-        run_mineru(pdf_path, output_dir, start, end)
+        run_mineru(pdf_path, pdf_output_dir, start, end)
 
 def main():
     BASE_DIR = Path(__file__).parent
