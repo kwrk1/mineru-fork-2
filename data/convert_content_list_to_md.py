@@ -4,6 +4,7 @@ Converts JSON or JSONL data with text and list elements into Markdown.
 Sorts by page_idx and vertical position (bbox[1]).
 """
 
+import re
 import json
 from pathlib import Path
 
@@ -35,6 +36,23 @@ def load_data(filepath):
     else:
         raise ValueError("Only .json or .jsonl files are supported.")
 
+def clean_text(text: str) -> str:
+    """
+    Entfernt:
+    - führende/trailing Spaces
+    - führende/trailing Newlines
+    - interne Newlines
+    - doppelte Leerzeichen
+    """
+    if not text:
+        return ""
+
+    
+    text = text.replace("\n", " ")     # interne newlines weg
+    text = re.sub(r"\s+", " ", text)   # doppelte spaces normalisieren
+    text = text.strip()                # trim außen
+
+    return text
 
 def sort_elements(elements):
     """
@@ -46,62 +64,111 @@ def sort_elements(elements):
     ))
 
 
-def convert_to_markdown(data):
-    """
-    Converts JSON data into Markdown.
-    """
+ABSATZ_PATTERN = re.compile(
+    r"""^(
+        \(\d+\)            |   # (1)
+        \d+\.\s                |   # 1.
+        [IVXLCDM]+\.*\s      |   # I.  II  etc.
+        [a-z]{1,2}\)\s       |   # a)  b)  aa)  bb)
+        P\s                # P
+    )""",
+    re.VERBOSE
+)
 
+
+def starts_new_paragraph(text: str) -> bool:
+    return bool(ABSATZ_PATTERN.match(text.strip()))
+
+
+def convert_to_markdown(data):
     relevant_elements = [
         elem for elem in data
-        if elem.get('type') in ['text', 'list']
+        if elem.get('type') in ['text', 'list', 'table']
     ]
 
     sorted_elements = sort_elements(relevant_elements)
 
     markdown_lines = []
-    current_page = None
+    current_paragraph = ""
 
     for elem in sorted_elements:
-        page_idx = elem.get('page_idx', 0)
         elem_type = elem.get('type')
 
-        if page_idx != current_page:
-            if current_page is not None:
-                markdown_lines.append('\n---\n')
-
-            markdown_lines.append(f'## Page {page_idx + 1}\n\n')
-            current_page = page_idx
-
+        # =========================
+        # TEXT BLOCK
+        # =========================
         if elem_type == 'text':
-            text = elem.get('text', '').strip()
-            text_level = elem.get('text_level', 0)
+            text = clean_text(elem.get('text', ''))
+            text_level = elem.get('text_level', 0) or 0
 
-            if not text_level:
-                text_level = 0
+            if not text:
+                continue
 
-            if text:
-                if text_level > 0:
-                    heading_level = min(text_level + 2, 6)  # Markdown max ######
-                    markdown_lines.append(f'{"#" * heading_level} {text}\n\n')
-                else:
-                    markdown_lines.append(f'{text}\n\n')
+            # -------- HEADING --------
+            if text_level > 0:
+                if current_paragraph:
+                    markdown_lines.append(current_paragraph.strip() + "\n\n\n")
+                    current_paragraph = ""
 
+                heading_level = min(text_level, 6)
+                markdown_lines.append(f'{"#" * heading_level} {text}\n')
+                continue
+
+            # -------- NORMAL TEXT --------
+            if starts_new_paragraph(text):
+                if current_paragraph:
+                    markdown_lines.append(current_paragraph.strip() + "\n")
+                current_paragraph = text
+            else:
+                current_paragraph += " " + text
+
+        # =========================
+        # LIST BLOCK
+        # =========================
         elif elem_type == 'list':
-            list_items = elem.get('list_items', [])
+            for item in elem.get('list_items', []):
+                item = clean_text(item)
+                if not item:
+                    continue
 
-            for item in list_items:
-                item = item.strip()
-                if item:
-                    markdown_lines.append(f'- {item}\n')
+                if starts_new_paragraph(item):
+                    if current_paragraph:
+                        markdown_lines.append(current_paragraph.strip() + "\n")
+                    current_paragraph = item
+                else:
+                    current_paragraph += " " + item
 
-            markdown_lines.append('\n')
+        # =========================
+        # TABLE BLOCK
+        # =========================
+        elif elem_type == 'table':
+            if current_paragraph:
+                markdown_lines.append(current_paragraph.strip() + "\n")
+                current_paragraph = ""
+
+            captions = elem.get('table_caption') or []
+            table_body = clean_text(elem.get('table_body', ''))
+
+            captions = elem.get('table_caption') or []
+            caption_text = " ".join(clean_text(c) for c in captions if clean_text(c))
+
+            if caption_text and table_body:
+                markdown_lines.append(f"{caption_text}: {table_body}\n")
+            elif table_body:
+                markdown_lines.append(f"{table_body}\n")
+            elif caption_text:
+                markdown_lines.append(f"{caption_text}\n")
+
+    # letzten Absatz flushen
+    if current_paragraph:
+        markdown_lines.append(current_paragraph.strip() + "\n\n")
 
     return ''.join(markdown_lines)
 
 
 def main():
-    PROJECT_NAME = "downloaded_arbeitsrecht"
-    INPUT_PATH = Path(__file__).parent / PROJECT_NAME / "new_content_list.jsonl"
+    PROJECT_NAME = "downloaded_arbeitsrecht_zuschnitt_3"
+    INPUT_PATH = Path(__file__).parent / PROJECT_NAME / "new_content_list.json"
     OUTPUT_PATH = Path(__file__).parent / PROJECT_NAME / "output.md"
 
 
@@ -120,7 +187,6 @@ def main():
         f.write(markdown_content)
 
     print(f"Markdown saved in '{OUTPUT_PATH}'")
-
 
 
 if __name__ == '__main__':
